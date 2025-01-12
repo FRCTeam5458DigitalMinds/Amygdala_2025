@@ -16,8 +16,6 @@ import com.revrobotics.spark.SparkBase.PersistMode;
 import com.revrobotics.spark.SparkBase.ResetMode;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
-
-
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -25,6 +23,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Timer;
 import frc.lib.CANCoderUtil;
 import frc.lib.OnboardModuleState;
+import frc.lib.CTREConfigs;
 import frc.lib.SwerveModuleConstants;
 import frc.lib.CANCoderUtil.CCUsage;
 import frc.robot.Constants;
@@ -48,8 +47,8 @@ public class SwerveModule {
   
     private CANcoder angleEncoder;
 
-    private final SparkClosedLoopController driveController;
-    private final SparkClosedLoopController angleController = angleMotor.getClosedLoopController();
+    private SparkClosedLoopController driveController;
+    private SparkClosedLoopController angleController;
 
    private final SimpleMotorFeedforward feedforward =
    new SimpleMotorFeedforward(
@@ -73,6 +72,7 @@ public class SwerveModule {
         /* Angle Motor Config */
         angleMotor = new SparkMax(moduleConstants.angleMotorID, MotorType.kBrushless);
         integratedAngleEncoder = angleMotor.getEncoder();
+        angleController = angleMotor.getClosedLoopController();
         configAngleMotor();
 
         /* Drive Motor Config */
@@ -118,7 +118,6 @@ public class SwerveModule {
         }
     }
 
-
     private void setAngle(SwerveModuleState desiredState){
         //Prevent rotating module if speed is less then 1%. Prevents Jittering.
         //the ? and : are a shorthand for an if-else loop
@@ -129,9 +128,6 @@ public class SwerveModule {
         );
         lastAngle = angle;
     }
-
-
-
 
     private void resetToAbsolute() {
         double absolutePosition = getCanCoder().getDegrees() - angleOffset.getDegrees();
@@ -146,11 +142,10 @@ public class SwerveModule {
     private void configAngleEncoder(){   
 
         angleEncoder.getConfigurator().apply(new CANcoderConfiguration());     
-        angleEncoder.getConfigurator().apply(Robot.ctreConfigs.swerveCanCoderConfig);
+
         CANCoderUtil.setCANCoderBusUsage(angleEncoder, CCUsage.kMinimal);
 
         //angleEncoder.optimizeBusUtilization();
-        //angleEncoder.getConfigurator().apply(Robot.ctreConfigs.swerveCanCoderConfig);
     }
 
     private void configAngleMotor(){
